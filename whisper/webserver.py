@@ -8,6 +8,18 @@ import whisper
 from whisper.decoding import DecodingOptions
 
 
+def check_cuda():
+    try:
+        import torch
+        if torch.cuda.is_available():
+            print("CUDA is available.")
+            print(f"Number of CUDA devices: {torch.cuda.device_count()}")
+            print(f"Device name: {torch.cuda.get_device_name(0)}")
+        else:
+            print("CUDA is not available.")
+    except ImportError:
+        print("PyTorch is not installed. Cannot check CUDA availability.")
+
 def _parse_param(value: str):
     if value.lower() in {"true", "false"}:
         return value.lower() == "true"
@@ -37,9 +49,10 @@ def print_available_parameters():
 
 
 def create_app(model=None, model_loader=None):
+    check_cuda()
     app = Flask(__name__)
     loader = model_loader or whisper.load_model
-    app.model = model or loader(os.getenv("WHISPER_MODEL", "base"))
+    app.model = model or loader(os.getenv("WHISPER_MODEL", "turbo"))
     app.model_loader = loader
 
     @app.route("/transcribe", methods=["POST"])
