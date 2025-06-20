@@ -155,6 +155,8 @@ Send a `POST` request to `/transcribe` with a multipart form field named
 
 Extra query parameters are passed to `whisper.transcribe`. For example
 
+When the server starts it prints the list of supported query parameters.
+
 ```bash
 curl -F file=@speech.wav "http://localhost:5000/transcribe?model=small&word_timestamps=true"
 ```

@@ -2,7 +2,7 @@ from io import BytesIO
 
 import pytest
 
-from whisper.webserver import create_app
+from whisper.webserver import available_parameters, create_app
 
 
 class DummyModel:
@@ -62,3 +62,9 @@ def test_transcribe_model_override():
     )
     assert response.status_code == 200
     assert calls["name"] == "small"
+
+
+def test_available_parameters_list():
+    params = available_parameters()
+    for name in ("model", "word_timestamps", "temperature"):
+        assert name in params

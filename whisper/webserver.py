@@ -1,9 +1,11 @@
+import inspect
 import os
 import tempfile
 
 from flask import Flask, jsonify, request
 
 import whisper
+from whisper.decoding import DecodingOptions
 
 
 def _parse_param(value: str):
@@ -16,6 +18,22 @@ def _parse_param(value: str):
             return float(value)
         except ValueError:
             return value
+
+
+def available_parameters():
+    sig = inspect.signature(whisper.transcribe)
+    params = [
+        name
+        for name, p in sig.parameters.items()
+        if p.kind == inspect.Parameter.KEYWORD_ONLY
+    ]
+    decode_params = list(DecodingOptions.__dataclass_fields__.keys())
+    return sorted({"model", *params, *decode_params})
+
+
+def print_available_parameters():
+    joined = ", ".join(available_parameters())
+    print(f"Available parameters for /transcribe: {joined}")
 
 
 def create_app(model=None, model_loader=None):
@@ -52,4 +70,5 @@ def create_app(model=None, model_loader=None):
 
 
 if __name__ == "__main__":
+    print_available_parameters()
     create_app().run(host="0.0.0.0", port=5000)
