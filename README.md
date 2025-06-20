@@ -153,15 +153,24 @@ Send a `POST` request to `/transcribe` with a multipart form field named
 `file` containing the audio. The response will be a JSON document with a
 `text` field holding the transcription.
 
+Extra query parameters are passed to `whisper.transcribe`. For example
+
+When the server starts it prints the list of supported query parameters.
+
+```bash
+curl -F file=@speech.wav "http://localhost:8001/transcribe?model=small&word_timestamps=true"
+```
+
 ### Container usage
 
 The repository provides a `Dockerfile` based on the
 `nvidia/cuda:12.4.0-runtime-ubuntu22.04` image so the server can be run inside
-a Podman or Docker container:
+a Podman or Docker container. The image installs Python and `ffmpeg` which
+is required for Whisper:
 
 ```bash
 podman build -t whisper .
-podman run -p 5000:5000 whisper
+podman run -p 8001:8001 whisper
 ```
 
 ## More examples
