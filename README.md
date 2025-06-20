@@ -140,6 +140,30 @@ result = whisper.decode(model, mel, options)
 print(result.text)
 ```
 
+## REST server
+
+You can start a small REST service that accepts an audio file and returns the
+transcription result:
+
+```bash
+python -m whisper.webserver
+```
+
+Send a `POST` request to `/transcribe` with a multipart form field named
+`file` containing the audio. The response will be a JSON document with a
+`text` field holding the transcription.
+
+### Container usage
+
+The repository provides a `Dockerfile` based on the
+`nvidia/cuda:12.4.0-runtime-ubuntu22.04` image so the server can be run inside
+a Podman or Docker container:
+
+```bash
+podman build -t whisper .
+podman run -p 5000:5000 whisper
+```
+
 ## More examples
 
 Please use the [🙌 Show and tell](https://github.com/openai/whisper/discussions/categories/show-and-tell) category in Discussions for sharing more example usages of Whisper and third-party extensions such as web demos, integrations with other tools, ports for different platforms, etc.
