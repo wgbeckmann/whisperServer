@@ -40,7 +40,7 @@ def available_parameters():
         if p.kind == inspect.Parameter.KEYWORD_ONLY
     ]
     decode_params = list(DecodingOptions.__dataclass_fields__.keys())
-    return sorted({"model", *params, *decode_params})
+    return sorted({"model", "timestamps", *params, *decode_params})
 
 
 def print_available_parameters():
@@ -66,6 +66,7 @@ def create_app(model=None, model_loader=None):
         # query and form params for transcribe options
         params = {**request.args.to_dict(flat=True), **request.form.to_dict(flat=True)}
         model_name = params.pop("model", None)
+        timestamps = _parse_param(params.pop("timestamps", "false"))
         options = {k: _parse_param(v) for k, v in params.items()}
 
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
@@ -78,7 +79,24 @@ def create_app(model=None, model_loader=None):
             os.remove(temp_name)
            
         print("Returning result:", result.get("text", "No text found"))
-        return jsonify({"text": result.get("text")})
+        if timestamps:
+
+            def _format(t: float) -> str:
+                secs = int(t)
+                hours = secs // 3600
+                minutes = (secs % 3600) // 60
+                seconds = secs % 60
+                return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+            lines = [
+                f"{_format(seg['start'])}: {seg['text'].strip()}"
+                for seg in result.get("segments", [])
+            ]
+            text = "\n".join(lines)
+        else:
+            text = result.get("text")
+
+        return jsonify({"text": text})
 
     return app
 

@@ -12,7 +12,13 @@ class DummyModel:
     def transcribe(self, path, **kwargs):
         assert path  # ensure path is provided
         self.last_kwargs = kwargs
-        return {"text": "dummy"}
+        return {
+            "text": "dummy text",
+            "segments": [
+                {"start": 0.0, "text": "dummy"},
+                {"start": 5.0, "text": "more"},
+            ],
+        }
 
 
 @pytest.fixture()
@@ -28,7 +34,7 @@ def test_transcribe_endpoint(app):
     response = client.post("/transcribe", data=data, content_type="multipart/form-data")
     assert response.status_code == 200
     assert response.is_json
-    assert response.get_json()["text"] == "dummy"
+    assert response.get_json()["text"] == "dummy text"
 
 
 def test_transcribe_with_options(app):
@@ -42,6 +48,19 @@ def test_transcribe_with_options(app):
     assert response.status_code == 200
     assert app.model.last_kwargs["word_timestamps"] is True
     assert app.model.last_kwargs["temperature"] == 0.0
+
+
+def test_transcribe_with_timestamp_output(app):
+    client = app.test_client()
+    data = {"file": (BytesIO(b"audio"), "test.wav")}
+    response = client.post(
+        "/transcribe?timestamps=true",
+        data=data,
+        content_type="multipart/form-data",
+    )
+    assert response.status_code == 200
+    assert "timestamps" not in app.model.last_kwargs
+    assert response.get_json()["text"] == "00:00:00: dummy\n00:00:05: more"
 
 
 def test_transcribe_model_override():
@@ -66,5 +85,5 @@ def test_transcribe_model_override():
 
 def test_available_parameters_list():
     params = available_parameters()
-    for name in ("model", "word_timestamps", "temperature"):
+    for name in ("model", "timestamps", "word_timestamps", "temperature"):
         assert name in params

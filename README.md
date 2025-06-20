@@ -153,12 +153,12 @@ Send a `POST` request to `/transcribe` with a multipart form field named
 `file` containing the audio. The response will be a JSON document with a
 `text` field holding the transcription.
 
-Extra query parameters are passed to `whisper.transcribe`. For example
-
+Extra query parameters are passed to `whisper.transcribe`. The custom
+`timestamps` parameter returns each sentence prefixed with its start time.
 When the server starts it prints the list of supported query parameters.
 
 ```bash
-curl -F file=@speech.wav "http://localhost:8001/transcribe?model=small&word_timestamps=true"
+curl -F file=@speech.wav "http://localhost:8001/transcribe?model=small&timestamps=true"
 ```
 
 ### Container usage
