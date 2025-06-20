@@ -158,7 +158,7 @@ Extra query parameters are passed to `whisper.transcribe`. For example
 When the server starts it prints the list of supported query parameters.
 
 ```bash
-curl -F file=@speech.wav "http://localhost:5000/transcribe?model=small&word_timestamps=true"
+curl -F file=@speech.wav "http://localhost:8001/transcribe?model=small&word_timestamps=true"
 ```
 
 ### Container usage
@@ -170,7 +170,7 @@ is required for Whisper:
 
 ```bash
 podman build -t whisper .
-podman run -p 5000:5000 whisper
+podman run -p 8001:8001 whisper
 ```
 
 ## More examples
