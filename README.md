@@ -153,6 +153,12 @@ Send a `POST` request to `/transcribe` with a multipart form field named
 `file` containing the audio. The response will be a JSON document with a
 `text` field holding the transcription.
 
+Extra query parameters are passed to `whisper.transcribe`. For example
+
+```bash
+curl -F file=@speech.wav "http://localhost:5000/transcribe?model=small&word_timestamps=true"
+```
+
 ### Container usage
 
 The repository provides a `Dockerfile` based on the

@@ -6,9 +6,23 @@ from flask import Flask, jsonify, request
 import whisper
 
 
-def create_app(model=None):
+def _parse_param(value: str):
+    if value.lower() in {"true", "false"}:
+        return value.lower() == "true"
+    try:
+        return int(value)
+    except ValueError:
+        try:
+            return float(value)
+        except ValueError:
+            return value
+
+
+def create_app(model=None, model_loader=None):
     app = Flask(__name__)
-    app.model = model or whisper.load_model(os.getenv("WHISPER_MODEL", "base"))
+    loader = model_loader or whisper.load_model
+    app.model = model or loader(os.getenv("WHISPER_MODEL", "base"))
+    app.model_loader = loader
 
     @app.route("/transcribe", methods=["POST"])
     def transcribe_route():
@@ -17,11 +31,18 @@ def create_app(model=None):
 
         file = request.files["file"]
         suffix = os.path.splitext(file.filename)[1]
+
+        # query and form params for transcribe options
+        params = {**request.args.to_dict(flat=True), **request.form.to_dict(flat=True)}
+        model_name = params.pop("model", None)
+        options = {k: _parse_param(v) for k, v in params.items()}
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
             file.save(tmp.name)
             temp_name = tmp.name
         try:
-            result = app.model.transcribe(temp_name)
+            model_inst = app.model_loader(model_name) if model_name else app.model
+            result = model_inst.transcribe(temp_name, **options)
         finally:
             os.remove(temp_name)
 
