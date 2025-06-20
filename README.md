@@ -157,7 +157,8 @@ Send a `POST` request to `/transcribe` with a multipart form field named
 
 The repository provides a `Dockerfile` based on the
 `nvidia/cuda:12.4.0-runtime-ubuntu22.04` image so the server can be run inside
-a Podman or Docker container:
+a Podman or Docker container. The image installs Python and `ffmpeg` which
+is required for Whisper:
 
 ```bash
 podman build -t whisper .
