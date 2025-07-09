@@ -170,8 +170,59 @@ is required for Whisper:
 
 ```bash
 podman build -t whisper .
-podman run -p 8001:8001 whisper
+podman tag whisper localhost:5000/whisper-server:latest
+podman push localhost:5000/whisper-server:latest
+
+sudo podman stop whisper-server
+sudo podman rm whisper-server
+sudo podman pull localhost:5000/whisper-server:latest
+sudo podman run -d --name whisper-server -p 8000:8001 --device nvidia.com/gpu=all localhost:5000/whisper-server:latest
+
+
 ```
+
+
+### 🔧 Schritte zur Einrichtung des Autostarts via systemd
+
+1. **Systemd-Unit generieren**
+
+   ```bash
+   podman generate systemd --name whisper-server --files --restart-policy=always
+   ```
+
+   → Dadurch entsteht die Datei `container-whisper-server.service` im aktuellen Verzeichnis.
+
+2. **Service-Datei ins systemd-Verzeichnis kopieren**
+
+   ```bash
+   sudo cp container-whisper-server.service /etc/systemd/system/
+   ```
+
+3. **systemd neu laden und Service aktivieren**
+
+   ```bash
+   sudo systemctl daemon-reexec
+   sudo systemctl enable container-whisper-server.service
+   sudo systemctl start container-whisper-server.service
+   ```
+
+---
+
+### 🧠 Hinweis zur NVIDIA-GPU
+
+Da du `--device nvidia.com/gpu=all` verwendest, gehe ich davon aus, dass du NVIDIA Container Toolkit richtig eingerichtet hast. Für den Autostart musst du sicherstellen:
+
+* `nvidia-container-runtime` ist installiert.
+* Dein Container verwendet ihn (ggf. in Image oder via Hook).
+* Podman startet den Container mit der NVIDIA-Integration korrekt auch über systemd. Das funktioniert meist automatisch, kann aber testweise so geprüft werden:
+
+  ```bash
+  sudo systemctl restart container-whisper-server.service
+  podman logs whisper-server
+  ```
+
+---
+
 
 ## More examples
 
