@@ -140,6 +140,90 @@ result = whisper.decode(model, mel, options)
 print(result.text)
 ```
 
+## REST server
+
+You can start a small REST service that accepts an audio file and returns the
+transcription result:
+
+```bash
+python -m whisper.webserver
+```
+
+Send a `POST` request to `/transcribe` with a multipart form field named
+`file` containing the audio. The response will be a JSON document with a
+`text` field holding the transcription.
+
+Extra query parameters are passed to `whisper.transcribe`. The custom
+`timestamps` parameter returns each sentence prefixed with its start time.
+When the server starts it prints the list of supported query parameters.
+
+```bash
+curl -F file=@speech.wav "http://localhost:8001/transcribe?model=small&timestamps=true"
+```
+
+### Container usage
+
+The repository provides a `Dockerfile` based on the
+`nvidia/cuda:12.4.0-runtime-ubuntu22.04` image so the server can be run inside
+a Podman or Docker container. The image installs Python and `ffmpeg` which
+is required for Whisper:
+
+```bash
+podman build -t whisper .
+podman tag whisper localhost:5000/whisper-server:latest
+podman push localhost:5000/whisper-server:latest
+
+sudo podman stop whisper-server
+sudo podman rm whisper-server
+sudo podman pull localhost:5000/whisper-server:latest
+sudo podman run -d --name whisper-server -p 8000:8001 --device nvidia.com/gpu=all localhost:5000/whisper-server:latest
+
+
+```
+
+
+### 🔧 Schritte zur Einrichtung des Autostarts via systemd
+
+1. **Systemd-Unit generieren**
+
+   ```bash
+   podman generate systemd --name whisper-server --files --restart-policy=always
+   ```
+
+   → Dadurch entsteht die Datei `container-whisper-server.service` im aktuellen Verzeichnis.
+
+2. **Service-Datei ins systemd-Verzeichnis kopieren**
+
+   ```bash
+   sudo cp container-whisper-server.service /etc/systemd/system/
+   ```
+
+3. **systemd neu laden und Service aktivieren**
+
+   ```bash
+   sudo systemctl daemon-reexec
+   sudo systemctl enable container-whisper-server.service
+   sudo systemctl start container-whisper-server.service
+   ```
+
+---
+
+### 🧠 Hinweis zur NVIDIA-GPU
+
+Da du `--device nvidia.com/gpu=all` verwendest, gehe ich davon aus, dass du NVIDIA Container Toolkit richtig eingerichtet hast. Für den Autostart musst du sicherstellen:
+
+* `nvidia-container-runtime` ist installiert.
+* Dein Container verwendet ihn (ggf. in Image oder via Hook).
+* Podman startet den Container mit der NVIDIA-Integration korrekt auch über systemd. Das funktioniert meist automatisch, kann aber testweise so geprüft werden:
+
+  ```bash
+  sudo systemctl restart container-whisper-server.service
+  podman logs whisper-server
+  ```
+
+---
+
+
 ## More examples
 
 Please use the [🙌 Show and tell](https://github.com/openai/whisper/discussions/categories/show-and-tell) category in Discussions for sharing more example usages of Whisper and third-party extensions such as web demos, integrations with other tools, ports for different platforms, etc.

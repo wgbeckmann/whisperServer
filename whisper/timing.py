@@ -38,7 +38,7 @@ def median_filter(x: torch.Tensor, filter_width: int):
             from .triton_ops import median_filter_cuda
 
             result = median_filter_cuda(x, filter_width)
-        except (RuntimeError, subprocess.CalledProcessError):
+        except (RuntimeError, subprocess.CalledProcessError, AttributeError):
             warnings.warn(
                 "Failed to launch Triton kernels, likely due to missing CUDA toolkit; "
                 "falling back to a slower median kernel implementation..."
